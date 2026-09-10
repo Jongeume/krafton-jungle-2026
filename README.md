@@ -6,9 +6,9 @@
 
 | 폴더 | 내용 |
 |---|---|
-| [`problem-solving/`](problem-solving/) | 주차별 문제 풀이 (week2, week3) |
-| [`study-notes/`](study-notes/) | 책·개념 상세 공부 노트 (그림·실습 코드 포함) |
 | [`blog/`](blog/) | 블로그 발행용 글 |
+| [`study-notes/`](study-notes/) | 책·개념 상세 공부 노트 (그림·실습 코드 포함) |
+| [`weekly/`](weekly/) | 주차별 과제 (week02-03, week4) |
 
 ## 📝 study-notes
 - _(작성 예정)_
