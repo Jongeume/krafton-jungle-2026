@@ -14,13 +14,6 @@
  *   `*colon = '\0'` 로 곧장 쓴다 → NULL 주소에 쓰기 → SIGSEGV.
  *   여러 줄을 도는 루프 안에 묻혀 있어, "어느 줄에서" 죽는지 gdb 로 짚어야 한다.
  *
- * [gdb 로 잡기]
- *   make gdb NAME=06_null_deref
- *   (gdb) run                       → 크래시(SIGSEGV)
- *   (gdb) bt                        → parse_headers 의 *colon = '\0' 지점
- *   (gdb) print colon               → colon == 0x0 (strchr 이 NULL 반환)
- *   (gdb) print line                → ':' 가 없는 그 줄("Connection")을 확인
- *
  * [printf(로그)로 잡기]
  *   각 줄에서 strchr 결과를 찍어 NULL 인 줄을 찾는다:
  *     fprintf(stderr, "line=[%s] colon=%p\n", line, (void*)colon);
@@ -34,26 +27,35 @@
 #include <string.h>
 
 #define MAX_HEADERS 32
-typedef struct {
+typedef struct
+{
     char *keys[MAX_HEADERS];
     char *vals[MAX_HEADERS];
-    int   count;
+    int count;
 } Headers;
 
-static char *skip_ws(char *s) {
-    while (*s == ' ' || *s == '\t') s++;
+static char *skip_ws(char *s)
+{
+    while (*s == ' ' || *s == '\t')
+        s++;
     return s;
 }
 
-static void parse_headers(char *text, Headers *h) {
-    for (char *line = strtok(text, "\n"); line != NULL; line = strtok(NULL, "\n")) {
-        char *colon = strchr(line, ':');   
+static void parse_headers(char *text, Headers *h)
+{
+    for (char *line = strtok(text, "\n"); line != NULL; line = strtok(NULL, "\n"))
+    {
+        char *colon = strchr(line, ':');
 
-        *colon = '\0';                    
+        if (colon == NULL)
+            continue;
+
+        *colon = '\0';
         char *key = line;
         char *val = skip_ws(colon + 1);
 
-        if (h->count < MAX_HEADERS) {
+        if (h->count < MAX_HEADERS)
+        {
             h->keys[h->count] = key;
             h->vals[h->count] = val;
             h->count++;
@@ -61,16 +63,17 @@ static void parse_headers(char *text, Headers *h) {
     }
 }
 
-int main(void) {
+int main(void)
+{
 
     char raw[] =
         "Host: example.com\n"
         "Accept: */*\n"
-        "Connection\n"                     
+        "Connection\n"
         "User-Agent: memdbg-cli\n";
 
-    Headers h = { .count = 0 };
-    parse_headers(raw, &h);                
+    Headers h = {.count = 0};
+    parse_headers(raw, &h);
 
     printf("parsed %d headers\n", h.count);
     for (int i = 0; i < h.count; i++)
