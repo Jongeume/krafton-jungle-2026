@@ -2,9 +2,9 @@
  * Challenge 08 — 미초기화 포인터 읽기 (심화: 더티 힙 재사용)
  *
  * [시나리오]
- *   희소 행렬(sparse matrix)을 "행 포인터 표"로 표현한다. 
+ *   희소 행렬(sparse matrix)을 "행 포인터 표"로 표현한다.
  *   희소 행렬(Sparse Matrix)은 대부분의 원소가 0인 행렬을 말한다.
- * 예시 : 
+ * 예시 :
  * 0 0 0 0 5
  * 0 0 3 0 0
  * 0 0 0 0 0
@@ -62,49 +62,67 @@
 
 /* 힙을 '더럽혀' 두어, 이후 같은 크기 할당이 쓰레기 값을 물려받게 만든다.
    (실무에서 흔한 '이전에 쓰고 free 한 청크의 잔여물' 상황을 재현) */
-static void dirty_heap(void) {
+static void dirty_heap(void)
+{
     void *scratch = malloc(ROWS * sizeof(int *));
-    if (scratch) {
+    if (scratch)
+    {
         memset(scratch, 0xAB, ROWS * sizeof(int *));
-        free(scratch);              /* glibc tcache 로 반환 → 같은 크기 malloc 이 이 블록을
-                                       LIFO 로 되돌려받는다(리눅스+glibc 고정이라 결정적). */
+        free(scratch); /* glibc tcache 로 반환 → 같은 크기 malloc 이 이 블록을
+                          LIFO 로 되돌려받는다(리눅스+glibc 고정이라 결정적). */
     }
 }
 
-static int **make_matrix(void) {
+static int **make_matrix(void)
+{
 
-    int **rows = malloc(ROWS * sizeof(int *));
-    if (!rows) { perror("malloc"); exit(1); }
+    // int **rows = malloc(ROWS * sizeof(int *));
+    int **rows = calloc(ROWS, sizeof(int *));
+    if (!rows)
+    {
+        perror("malloc");
+        exit(1);
+    }
 
-    for (int i = 0; i < ROWS; i += 2) {
+    for (int i = 0; i < ROWS; i += 2)
+    {
         int *r = malloc(COLS * sizeof(int));
-        for (int j = 0; j < COLS; j++) r[j] = i * COLS + j;
+        for (int j = 0; j < COLS; j++)
+            r[j] = i * COLS + j;
         rows[i] = r;
     }
     return rows;
 }
 
-static long row_sum(int **rows, int nrows) {
+static long row_sum(int **rows, int nrows)
+{
     long total = 0;
-    for (int i = 0; i < nrows; i++) {
-        for (int j = 0; j < COLS; j++) {
-            total += rows[i][j];      
+    for (int i = 0; i < nrows; i++)
+    {
+        if (rows[i] == NULL)
+            continue;
+
+        for (int j = 0; j < COLS; j++)
+        {
+            total += rows[i][j];
         }
     }
     return total;
 }
 
-int main(void) {
+int main(void)
+{
     dirty_heap();
 
     int **rows = make_matrix();
     printf("summing %dx%d matrix...\n", ROWS, COLS);
 
-    long s = row_sum(rows, ROWS);     
+    long s = row_sum(rows, ROWS);
 
     printf("sum = %ld\n", s);
 
-    for (int i = 0; i < ROWS; i += 2) free(rows[i]);
+    for (int i = 0; i < ROWS; i += 2)
+        free(rows[i]);
     free(rows);
     return 0;
 }
