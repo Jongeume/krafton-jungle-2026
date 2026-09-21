@@ -35,57 +35,65 @@
  *
  * TODO: 지역 배열의 주소를 밖으로 돌려주지 말라. 호출자가 소유하는 저장소(배열/힙)에
  *       결과를 채우거나, 힙에 할당해 수명을 넘기세요.
+ *
+ * (1.) 실험) 스택프레임을 더 추가해서 warm_stack의 rsp가 닿지않는 낮은 주소에서 배열의 주소 가르키기
+ * (2.) LineView 구조체에 lines를 배열의 주소를 참조하는게 아닌, 배열의 값을 담도록 수정하기
+ * (3.) main에 배열 만들어서 활성화된 프레임 영역에 배열생성 후 해당 배열 주소 가르키기
+ * (4.) malloc으로 힙영역으로 분리하기
  */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define MAX_LINES 8
-typedef struct {
-    char **lines;    /* 줄 포인터들의 '배열'을 가리킨다 */
-    int    count;
+typedef struct
+{
+    // char **lines; /* 줄 포인터들의 '배열'을 가리킨다 = 칸들의 주소 */
+    char *lines[MAX_LINES];
+    int count;
 } LineView;
 
-/* 결과를 뷰에 채운다(포인터를 함수 경계 너머로 옮겨 -Wdangling 을 회피하는 형태) */
-static void view_set(LineView *out, char **arr, int n) {
-    out->lines = arr;
-    out->count = n;
+static void view_set(LineView *out, char *arr)
+{
+    out->lines[out->count++] = arr;
 }
 
-static void split_lines(LineView *out, char *text) {
-    char *parts[MAX_LINES];              
-    int n = 0;
-    /* strtok는 새로 할당하지 않고, 넘겨받은 문자열 내부의 주소를 돌려준다. 
-    * 따라서, strtok은 원본 버퍼를 제자리에서 수정한다. 
-    */
-    for (char *ln = strtok(text, "\n"); ln && n < MAX_LINES; ln = strtok(NULL, "\n"))
-        parts[n++] = ln;
+static void split_lines(LineView *out, char *text)
+{
+    // char *parts[MAX_LINES];
+    // int n = 0;
+    /* strtok는 새로 할당하지 않고, 넘겨받은 문자열 내부의 주소를 돌려준다.
+     * 따라서, strtok은 원본 버퍼를 제자리에서 수정한다.
+     */
+    for (char *ln = strtok(text, "\n"); ln && out->count < MAX_LINES; ln = strtok(NULL, "\n"))
+        view_set(out, ln);
 
-    view_set(out, parts, n);      
-
-    /* TODO 상기 코드를 수정하여 결과를 호출자가 준 out 에 직접 채운다(값 반환 아님, 지역 주소 반환 아님). */       
+    // parts[n++] = ln;
+    /* TODO 상기 코드를 수정하여 결과를 호출자가 준 out 에 직접 채운다(값 반환 아님, 지역 주소 반환 아님). */
 }
-
 /* split_lines 가 쓰던 스택 프레임을, 같은 모양(char*[8])의 지역 배열로 덮는다.
    무효가 된 parts[] 자리에 '그럴듯한 쓰레기 포인터'가 들어차게 만든다. */
-static void warm_stack(void) {
+static void warm_stack(void)
+{
     char *scratch[MAX_LINES];
     for (int i = 0; i < MAX_LINES; i++)
-        scratch[i] = (char *)0x4141414141414141ULL;   /* 매핑되지 않은 주소 */
-    __asm__ volatile("" :: "r"(scratch) : "memory");   /* 최적화 제거 방지 */
+        scratch[i] = (char *)0x4141414141414141ULL; /* 매핑되지 않은 주소 */
+    __asm__ volatile("" ::"r"(scratch) : "memory"); /* 최적화 제거 방지 */
 }
 
-int main(void) {
+int main(void)
+{
     char text[] = "alpha\nbeta\ngamma";
 
-    LineView v;
-    split_lines(&v, text);               
-    warm_stack();                        
+    LineView v = {.count = 0};
+    split_lines(&v, text);
+    warm_stack();
 
     long checksum = 0;
     for (int i = 0; i < v.count; i++)
         checksum += (unsigned char)v.lines[i][0];
 
     printf("lines = %d, checksum = %ld\n", v.count, checksum);
+
     return 0;
 }
