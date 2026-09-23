@@ -15,7 +15,7 @@
  *     A = 0: 완전 투명. 로고 자리는 비어 있고 사진만 보임
  *     A = 128: 반투명. 로고 색과 사진 색이 섞임
  *     웹·앱에서 PNG 로고, 게임 캐릭터, UI 버튼 그림자가 다 이 방식
- *    
+ *
  * [증상]
  *   크기 계산 `width * height * channels` 가 'int' 산술로 먼저 이뤄진 뒤에야 size_t 로
  *   넓혀진다. 큰 해상도에서는 이 int 곱이 32비트 범위를 넘어 래핑되어, malloc 은
@@ -45,36 +45,52 @@
 #include <stdlib.h>
 #include <stdint.h> // 수정할 때 SIZE_MAX 로 곱셈 오버플로를 검사하라고 미리 넣어 둔 헤더
 
-typedef struct {
+typedef struct
+{
+    size_t nbytes;
     int width;
     int height;
     int channels;
-    int nbytes;              
     unsigned char *px;
 } Image;
 
-static Image *image_new(int width, int height, int channels) {
+static Image *image_new(int width, int height, int channels)
+{
     Image *img = malloc(sizeof *img);
-    if (!img) { perror("malloc"); exit(1); }
+    if (!img)
+    {
+        perror("malloc");
+        exit(1);
+    }
     img->width = width;
     img->height = height;
     img->channels = channels;
 
-    img->nbytes = width * height * channels;
-    img->px = malloc((size_t)img->nbytes);     
-    if (!img->px) { perror("malloc px"); exit(1); }
+    img->nbytes = (size_t)width * (size_t)height * (size_t)channels;
+
+    img->px = malloc((size_t)img->nbytes);
+    if (!img->px)
+    {
+        perror("malloc px");
+        exit(1);
+    }
     return img;
 }
 
-static void image_fill(Image *img, unsigned char value) {
+static void image_fill(Image *img, unsigned char value)
+{
 
     size_t total = (size_t)img->width * (size_t)img->height * (size_t)img->channels;
-    for (size_t i = 0; i < total; i++) {
-        img->px[i] = value;                     
+    for (size_t i = 0; i < total; i++)
+    {
+        img->px[i] = value;
+        if (i == INT32_MAX)
+            break;
     }
 }
 
-int main(void) {
+int main(void)
+{
 
     /* [Thinking Point]
      * 65536 x 65536 픽셀에 채널 4개(RGBA: Red/Green/Blue/Alpha=불투명도)를 요청한다.
@@ -87,10 +103,10 @@ int main(void) {
      *               일 때가 3(RGB)일 때보다 오버플로가 더 쉽게 터질까?
      *               (해결 힌트: 크기 계산을 size_t 로 승격하고, 곱셈 오버플로를 검사한다) */
     Image *img = image_new(65536, 65536, 4);
-    printf("allocated nbytes(int)=%d for %dx%d x%d\n",
+    printf("allocated nbytes(int)=%zu for %dx%d x%d\n",
            img->nbytes, img->width, img->height, img->channels);
 
-    image_fill(img, 0xFF);                       
+    image_fill(img, 0xFF);
 
     printf("px[0]=%u\n", img->px[0]);
     free(img->px);
