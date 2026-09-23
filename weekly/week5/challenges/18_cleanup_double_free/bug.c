@@ -8,7 +8,7 @@
  *
  * [예시 상황]
  *  TCP 소켓 + TLS (HTTPS)
- *  소켓을 열고, 읽기/쓰기 버퍼를 잡고, SSL 세션을 만든 뒤 SSL_do_handshake()로 인증서를 확인. 
+ *  소켓을 열고, 읽기/쓰기 버퍼를 잡고, SSL 세션을 만든 뒤 SSL_do_handshake()로 인증서를 확인.
  *  핸드셰이크가 실패하면 소켓·SSL 객체·버퍼를 역순으로 닫음. handshake_ok가 바로 이 단계.
  *
  * [기대 동작]
@@ -42,54 +42,65 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct {
+typedef struct
+{
     char *rx;
     char *tx;
-    int  *state;
+    int *state;
 } Conn;
 
-static int handshake_ok(const Conn *c) {
+static int handshake_ok(const Conn *c)
+{
     (void)c;
-    return 0;                     /* 실패 */
+    return 0; /* 실패 */
 }
 
-static int conn_open(Conn *c, size_t bufsz) {
+static int conn_open(Conn *c, size_t bufsz)
+{
     c->rx = c->tx = NULL;
     c->state = NULL;
 
     c->rx = malloc(bufsz);
-    if (!c->rx) goto fail_rx;
+    if (!c->rx)
+        goto fail_rx;
 
     c->tx = malloc(bufsz);
-    if (!c->tx) goto fail_tx;
+    if (!c->tx)
+        goto fail_tx;
 
     c->state = malloc(sizeof(int) * 4);
-    if (!c->state) goto fail_state;
+    if (!c->state)
+        goto fail_state;
 
     strcpy(c->rx, "rx-ready");
     strcpy(c->tx, "tx-ready");
-    for (int i = 0; i < 4; i++) c->state[i] = i;
+    for (int i = 0; i < 4; i++)
+        c->state[i] = i;
 
-    if (!handshake_ok(c)) {
+    if (!handshake_ok(c))
+    {
 
-        free(c->tx);              
-        goto fail_tx;             
+        // free(c->tx);
+        goto fail_state;
+        // goto fail_tx; 도달하지않음.
+        // goto fail_rx; 도달하지않음.
     }
 
-    return 0;                     
+    return 0;
 
 fail_state:
     free(c->state);
 fail_tx:
-    free(c->tx);                 
+    free(c->tx);
 fail_rx:
     free(c->rx);
     return -1;
 }
 
-int main(void) {
+int main(void)
+{
     Conn c;
-    int rc = conn_open(&c, 32);   
+    int rc = conn_open(&c, 32);
     printf("conn_open rc=%d\n", rc);
     return 0;
 }
