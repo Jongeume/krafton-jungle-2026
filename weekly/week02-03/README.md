@@ -1,3 +1,44 @@
+## 📋 내 풀이 인덱스
+
+| 주차 | 단계 | # | 문제 | 유형 | ⭐ | 코드 |
+| --- | --- | ---: | --- | --- | :---: | --- |
+| 2주차 | basic | 01 | 문자열 | 파이썬 기본 |  | [01_string.py](week2/1.%20basic/01_string.py) |
+| 2주차 | basic | 02 | 배열 | 파이썬 기본 |  | [02_array.py](week2/1.%20basic/02_array.py) |
+| 2주차 | basic | 03 | 딕셔너리 | 파이썬 기본 |  | [03_python_dict.py](week2/1.%20basic/03_python_dict.py) |
+| 2주차 | basic | 04 | 완전 탐색 | 완전 탐색 | ⭐ | [04_brute_force.py](week2/1.%20basic/04_brute_force.py) |
+| 2주차 | basic | 05 | 팩토리얼·피보나치 | 재귀 |  | [05_recursion.py](week2/1.%20basic/05_recursion.py) |
+| 2주차 | basic | 06 | 조합 생성 | 백트래킹 |  | [06_backtracking.py](week2/1.%20basic/06_backtracking.py) |
+| 2주차 | basic | 07 | 시간복잡도 | 복잡도 |  | [07_complexity.py](week2/1.%20basic/07_complexity.py) |
+| 2주차 | basic | 08 | 버블 정렬 | 정렬 |  | [08_bubble_sort.py](week2/1.%20basic/08_bubble_sort.py) |
+| 2주차 | basic | 09 | 정수론 | 정수론 |  | [09_number_theory.py](week2/1.%20basic/09_number_theory.py) |
+| 2주차 | basic | 10 | 이분 탐색 | 이분 탐색 | ⭐ | [10_binary_search.py](week2/1.%20basic/10_binary_search.py) |
+| 2주차 | basic | 11 | 최댓값 찾기 | 분할 정복 |  | [11_divide_conquer.py](week2/1.%20basic/11_divide_conquer.py) |
+| 2주차 | basic | 12 | 스택 | 스택 |  | [12_stack.py](week2/1.%20basic/12_stack.py) |
+| 2주차 | basic | 13 | 큐 | 큐 | ⭐ | [13_queue.py](week2/1.%20basic/13_queue.py) |
+| 2주차 | basic | 14 | 연결 리스트 | 연결 리스트 |  | [14_linked_list.py](week2/1.%20basic/14_linked_list.py) |
+| 2주차 | basic | 15 | 해시 테이블 | 해시 | ⭐ | [15_hash_table.py](week2/1.%20basic/15_hash_table.py) |
+| 2주차 | advanced | 01 | 퀵 정렬 | 정렬 · 분할 정복 |  | [01_quick_sort.py](week2/2.%20advanced/01_quick_sort.py) |
+| 2주차 | advanced | 02 | 병합 정렬 | 정렬 · 분할 정복 | ⭐ | [02_merge_sort.py](week2/2.%20advanced/02_merge_sort.py) |
+| 2주차 | advanced | 03 | 우선순위 큐 | 힙 | ⭐ | [03_priority_queue.py](week2/2.%20advanced/03_priority_queue.py) |
+| 2주차 | advanced | 04 | 하노이 탑 | 재귀 | ⭐ | [04_hanoi_tower.py](week2/2.%20advanced/04_hanoi_tower.py) |
+| 2주차 | advanced | 05 | N-Queen | 백트래킹 | ⭐ | [05_n_queen.py](week2/2.%20advanced/05_n_queen.py) |
+| 3주차 | basic | 01 | 이진 트리 | 트리 |  | [01_binary_tree.py](week3/1.%20basic/01_binary_tree.py) |
+| 3주차 | basic | 02 | 이진 탐색 트리 | 트리 | ⭐ | [02_bst.py](week3/1.%20basic/02_bst.py) |
+| 3주차 | basic | 03 | 그래프 기초 | 그래프 표현 | ⭐ | [03_graph_basic.py](week3/1.%20basic/03_graph_basic.py) |
+| 3주차 | basic | 04 | BFS | BFS | ⭐ | [04_bfs.py](week3/1.%20basic/04_bfs.py) |
+| 3주차 | basic | 05 | DFS | DFS | ⭐ | [05_dfs.py](week3/1.%20basic/05_dfs.py) |
+| 3주차 | basic | 06 | 피보나치 (top-down) | DP |  | [06_dp_fibonacci.py](week3/1.%20basic/06_dp_fibonacci.py) |
+| 3주차 | basic | 07 | 계단 오르기 (bottom-up) | DP |  | [07_dp_stairs.py](week3/1.%20basic/07_dp_stairs.py) |
+| 3주차 | basic | 08 | 거스름돈 | 그리디 | ⭐ | [08_greedy_coin.py](week3/1.%20basic/08_greedy_coin.py) |
+| 3주차 | basic | 09 | 회의실 배정 | 그리디 |  | [09_greedy_meeting.py](week3/1.%20basic/09_greedy_meeting.py) |
+| 3주차 | advanced | 01 | 위상 정렬 | 위상 정렬 | ⭐ | [01_topological_sort.py](week3/2.%20advanced/01_topological_sort.py) |
+| 3주차 | advanced | 02 | LCS | DP | ⭐ | [02_lcs.py](week3/2.%20advanced/02_lcs.py) |
+| 3주차 | advanced | 03 | 다익스트라 | 다익스트라 | ⭐ | [03_dijkstra.py](week3/2.%20advanced/03_dijkstra.py) |
+
+⭐ = 유형별 대표 문제
+
+---
+
 # SW-AI 컴퓨팅 사고로의 전환 - 레포지토리 템플릿 (Week 2 / Week 3)
 
 ## 📂 폴더 구조

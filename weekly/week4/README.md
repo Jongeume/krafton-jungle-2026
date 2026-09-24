@@ -1,3 +1,54 @@
+## 📋 내 풀이 인덱스 — C로 구현한 자료구조
+
+### 연결 리스트
+
+| # | 구현 함수 | 내용 | ⭐ | 코드 |
+| --- | --- | --- | :---: | --- |
+| Q1 | `insertSortedLL` | 정렬 유지 삽입 |  | [Q1_A_LL.c](Data-Structures/Linked_List/Q1_A_LL.c) |
+| Q2 | `alternateMergeLinkedList` | 번갈아 병합 |  | [Q2_A_LL.c](Data-Structures/Linked_List/Q2_A_LL.c) |
+| Q3 | `moveOddItemsToBack` | 홀수를 뒤로 |  | [Q3_A_LL.c](Data-Structures/Linked_List/Q3_A_LL.c) |
+| Q4 | `moveEvenItemsToBack` | 짝수를 뒤로 |  | [Q4_A_LL.c](Data-Structures/Linked_List/Q4_A_LL.c) |
+| Q5 | `frontBackSplitLinkedList` | 앞뒤로 나누기 |  | [Q5_A_LL.c](Data-Structures/Linked_List/Q5_A_LL.c) |
+| Q6 | `moveMaxToFront` | 최댓값을 앞으로 |  | [Q6_A_LL.c](Data-Structures/Linked_List/Q6_A_LL.c) |
+| Q7 | `RecursiveReverse` | 재귀로 뒤집기 | ⭐ | [Q7_A_LL.c](Data-Structures/Linked_List/Q7_A_LL.c) |
+
+### 스택 · 큐
+
+| # | 구현 함수 | 내용 | ⭐ | 코드 |
+| --- | --- | --- | :---: | --- |
+| Q1 | `createQueueFromLinkedList · removeOddValues` | 리스트 → 큐, 홀수 제거 |  | [Q1_C_SQ.c](Data-Structures/Stack_and_Queue/Q1_C_SQ.c) |
+| Q2 | `createStackFromLinkedList · removeEvenValues` | 리스트 → 스택, 짝수 제거 |  | [Q2_C_SQ.c](Data-Structures/Stack_and_Queue/Q2_C_SQ.c) |
+| Q3 | `isStackPairwiseConsecutive` | 스택 쌍 연속 검사 |  | [Q3_C_SQ.c](Data-Structures/Stack_and_Queue/Q3_C_SQ.c) |
+| Q4 | `reverse` | 큐 뒤집기 (스택 이용) |  | [Q4_C_SQ.c](Data-Structures/Stack_and_Queue/Q4_C_SQ.c) |
+| Q5 | `recursiveReverse` | 큐 재귀로 뒤집기 |  | [Q5_C_SQ.c](Data-Structures/Stack_and_Queue/Q5_C_SQ.c) |
+| Q6 | `removeUntil` | 값까지 pop |  | [Q6_C_SQ.c](Data-Structures/Stack_and_Queue/Q6_C_SQ.c) |
+| Q7 | `balanced` | 괄호 균형 | ⭐ | [Q7_C_SQ.c](Data-Structures/Stack_and_Queue/Q7_C_SQ.c) |
+
+### 이진 트리
+
+| # | 구현 함수 | 내용 | ⭐ | 코드 |
+| --- | --- | --- | :---: | --- |
+| Q1 | `identical` | 두 트리가 같은가 |  | [Q1_E_BT.c](Data-Structures/Binary_Tree/Q1_E_BT.c) |
+| Q2 | `maxHeight` | 최대 높이 | ⭐ | [Q2_E_BT.c](Data-Structures/Binary_Tree/Q2_E_BT.c) |
+| Q3 | `countOneChildNodes` | 자식 하나인 노드 수 |  | [Q3_E_BT.c](Data-Structures/Binary_Tree/Q3_E_BT.c) |
+| Q4 | `sumOfOddNodes` | 홀수 노드 합 |  | [Q4_E_BT.c](Data-Structures/Binary_Tree/Q4_E_BT.c) |
+| Q5 | `mirrorTree` | 좌우 뒤집기 |  | [Q5_E_BT.c](Data-Structures/Binary_Tree/Q5_E_BT.c) |
+| Q6 | `printSmallerValues` | 작은 값 출력 |  | [Q6_E_BT.c](Data-Structures/Binary_Tree/Q6_E_BT.c) |
+| Q7 | `smallestValue` | 최솟값 |  | [Q7_E_BT.c](Data-Structures/Binary_Tree/Q7_E_BT.c) |
+| Q8 | `hasGreatGrandchild` | 증손자가 있는 노드 |  | [Q8_E_BT.c](Data-Structures/Binary_Tree/Q8_E_BT.c) |
+
+### 이진 탐색 트리
+
+| # | 구현 함수 | 내용 | ⭐ | 코드 |
+| --- | --- | --- | :---: | --- |
+| Q1 | `levelOrderTraversal` | 레벨 순회 (큐) |  | [Q1_F_BST.c](Data-Structures/Binary_Search_Tree/Q1_F_BST.c) |
+| Q2 | `inOrderTraversal` | 중위 순회 (반복) |  | [Q2_F_BST.c](Data-Structures/Binary_Search_Tree/Q2_F_BST.c) |
+| Q3 | `preOrderIterative` | 전위 순회 (반복) |  | [Q3_F_BST.c](Data-Structures/Binary_Search_Tree/Q3_F_BST.c) |
+| Q4 | `postOrderIterativeS1` | 후위 순회 (스택 1개) |  | [Q4_F_BST.c](Data-Structures/Binary_Search_Tree/Q4_F_BST.c) |
+| Q5 | `postOrderIterativeS2 · removeNodeFromTree` | 후위 순회 (스택 2개) · 노드 삭제 | ⭐ | [Q5_F_BST.c](Data-Structures/Binary_Search_Tree/Q5_F_BST.c) |
+
+---
+
 # 📘 Docker + VSCode DevContainer 기반 C 개발 환경 구축 가이드
 
 이 문서는 **Windows**와 **macOS** 사용자가 Docker와 VSCode DevContainer 기능을 활용하여 C 개발 및 디버깅 환경을 빠르게 구축할 수 있도록 도와줍니다.
