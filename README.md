@@ -8,7 +8,7 @@
 |---|---|
 | [`blog/`](blog/) | 블로그 발행용 글 |
 | [`study-notes/`](study-notes/) | 책·개념 상세 공부 노트 (그림·실습 코드 포함) |
-| [`weekly/`](weekly/) | 주차별 과제 (week02-03, week4) |
+| [`weekly/`](weekly/) | 주차별 과제 — [week02-03](weekly/week02-03/) 알고리즘(파이썬) · [week4](weekly/week4/) 자료구조(C) · [week5](weekly/week5/) 메모리 디버깅(gdb) |
 
 ## 📝 study-notes
 - _(작성 예정)_
