@@ -1,6 +1,6 @@
 /*
  * mm-naive.c - The fastest, least memory-efficient malloc package.
- * 
+ *
  * In this naive approach, a block is allocated by simply incrementing
  * the brk pointer.  A block is pure payload. There are no headers or
  * footers.  Blocks are never coalesced or reused. Realloc is
@@ -24,27 +24,50 @@
  ********************************************************/
 team_t team = {
     /* Team name */
-    "ateam",
+    "No.1 team",
     /* First member's full name */
-    "Harry Bovik",
+    "Jongeume",
     /* First member's email address */
-    "bovik@cs.cmu.edu",
+    "Jongeume@gmail.com",
     /* Second member's full name (leave blank if none) */
     "",
     /* Second member's email address (leave blank if none) */
-    ""
-};
+    ""};
 
 /* single word (4) or double word (8) alignment */
-#define ALIGNMENT 8
+#define ALIGNMENT 8 // 정렬
+
+/* Basic constants and macros */
+#define WSIZE 4                           // Word, 헤더, 풋터 size (bytes)
+#define DSIZE 8                           // Double word size (bytes)
+#define CHUNKSIZE (1 << 12)               // 힙을 한 번에 늘리는 크기 (0000 0000 0000 0001   ->   0001 0000 0000 0000) 2^12 = 4096, 4KB
+#define MAX(x, y) ((x) > (y) ? (x) : (y)) // x,y 비교 max값
 
 /* rounds up to the nearest multiple of ALIGNMENT */
-#define ALIGN(size) (((size) + (ALIGNMENT-1)) & ~0x7)
-
+#define ALIGN(size) (((size) + (ALIGNMENT - 1)) & ~0x7) // 하위 3비트 반올림 8배수 정렬
 
 #define SIZE_T_SIZE (ALIGN(sizeof(size_t)))
 
-/* 
+/* Pack 크기와 할당 비트를 한 워드로 */
+#define PACK(size, alloc) ((size) | (alloc)) // 크기와 할당 비트를 한 워드로
+
+/* 주소 p의 워드를 읽기/쓰기 */
+#define GET(p) (*(unsigned int *)(p))              // 음수없이 표현 0 ~ 4,2..,..
+#define PUT(p, val) (*(unsigned int *)(p) = (val)) // 음수없이 표현 0 ~ 4,2..,..
+
+/* 주소 p에 있는 헤더 또는 풋터의 size와 할당 비트를 리턴 */
+#define GET_SIZE(p) (GET(p) & ~0x7) // 크기만 하위 3비트 지움 GET(p) & ~0x7
+#define GET_ALLOC(p) (GET(p) & 0x1) // 맨 아래 비트만 GET(p) & 0x1
+
+/* 블록 포인터 bp가 주어지면, 각각 블록 헤더와 풋터를 가르키는 포인터를 리턴 */
+#define HDRP(bp) ((char *)(bp) - WSIZE)                      // = bp - 4
+#define FTRP(bp) ((char *)(bp) + GET_SIZE(HDRP(bp)) - DSIZE) // = bp + GET_SIZE(HDRP(bp)) - 8
+
+/* 다음과 이전 블록의 블록 포인터를 각각 리턴 */
+#define NEXT_BLKP(bp) ((char *)(bp) + GET_SIZE(((char *)(bp) - WSIZE))) // = bp + GET_SIZE(HDRP(bp))
+#define PREV_BLKP(bp) ((char *)(bp) - GET_SIZE(((char *)(bp) - DSIZE))) // = bp - 이전 블록 크기 GET_SIZE(HDRP(bp-8))
+
+/*
  * mm_init - initialize the malloc package.
  */
 int mm_init(void)
@@ -52,17 +75,19 @@ int mm_init(void)
     return 0;
 }
 
-/* 
+/*
  * mm_malloc - Allocate a block by incrementing the brk pointer.
  *     Always allocate a block whose size is a multiple of the alignment.
  */
 void *mm_malloc(size_t size)
 {
+
     int newsize = ALIGN(size + SIZE_T_SIZE);
     void *p = mem_sbrk(newsize);
     if (p == (void *)-1)
-	return NULL;
-    else {
+        return NULL;
+    else
+    {
         *(size_t *)p = size;
         return (void *)((char *)p + SIZE_T_SIZE);
     }
@@ -80,31 +105,22 @@ void mm_free(void *ptr)
  */
 void *mm_realloc(void *ptr, size_t size)
 {
+    /*
+    [제자리 할당 최적화]
+    1. 기존의 영역이랑 크기가 같을 때. -> 값복사 X, 포인터 그대로
+    2. 기존의 영역보다 크기가 작을 때. -> 값복사 X, 포인터 그대로, 블록크기 줄이기.
+    */
     void *oldptr = ptr;
     void *newptr;
     size_t copySize;
-    
+
     newptr = mm_malloc(size);
     if (newptr == NULL)
-      return NULL;
+        return NULL;
     copySize = *(size_t *)((char *)oldptr - SIZE_T_SIZE);
     if (size < copySize)
-      copySize = size;
+        copySize = size;
     memcpy(newptr, oldptr, copySize);
     mm_free(oldptr);
     return newptr;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
