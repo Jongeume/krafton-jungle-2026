@@ -25,11 +25,11 @@ krafton-jungle-2026/
 │   │   ├── challenges/              # 01_use_after_free ~ 20_vector_stale_pointer
 │   │   └── scripts/
 │   └── week6/
-│       └── malloc-lab/              # 동적 메모리 할당기 구현
+│       └── malloc-lab/              # 동적 메모리 할당기 구현 (Dev Container 포함)
 ├── study-notes/                     # 책 · 개념 공부 노트
 │   └── csapp/
-│       └── 09-virtual-memory/       # CS:APP 9장 가상메모리
-├── blog/                            # 블로그 발행용 글
+│       └── 09-virtual-memory/       # CS:APP 9장 가상메모리 (9.1 ~ 9.6.3)
+├── blog/                            # 블로그 글 아카이브 (블로그 리포에서 자동 미러링)
 │   └── _posts/
 └── README.md
 ```
@@ -40,14 +40,15 @@ krafton-jungle-2026/
 | [`weekly/week02-03/week3`](weekly/week02-03/week3) | Python | 9 + 3 | 트리 · 그래프 · DP · 그리디, 위상 정렬 · LCS · 다익스트라 |
 | [`weekly/week4`](weekly/week4) | C | 27 | 연결 리스트 · 스택 / 큐 · 이진 트리 · BST 를 C 로 구현 |
 | [`weekly/week5`](weekly/week5) | C | 20 | 메모리 버그를 gdb 로 찾고 고치기 (분석 README 01 ~ 07) |
-| [`weekly/week6`](weekly/week6) | C | — | malloc-lab — 진행 중 |
-| [`study-notes/csapp`](study-notes/csapp) | — | — | CS:APP 9장 9.1 ~ 9.6 |
+| [`weekly/week6`](weekly/week6) | C | — | malloc-lab 진행 중 — Dev Container 로 `-m32` 빌드 환경 준비 |
+| [`study-notes/csapp`](study-notes/csapp) | — | — | CS:APP 9장 9.1 ~ 9.6.3 (9.7 ~ 9.11 예정) |
 
 ## 📝 study-notes
-- [CS:APP 9장 가상메모리](study-notes/csapp/09-virtual-memory/README.md)
+- [CS:APP 9장 가상메모리](study-notes/csapp/09-virtual-memory/README.md) — 절마다 요약 · 비유 · 설명 구조, 9.1 ~ 9.6.3
 
 ## ✍️ blog
-- _(작성 예정)_
+- 발행된 블로그 : [jongeume.github.io](https://jongeume.github.io)
+- [몰입과 소통 사이에서](blog/_posts/2026-09-01-jungle-essay.md) (2026-09-01, 에세이)
 
 ---
 
@@ -56,3 +57,4 @@ krafton-jungle-2026/
 - 챕터 · 글 폴더는 `01-`, `02-` 번호 접두사 + 영문 슬러그 (읽는 순서대로 정렬)
 - 각 폴더의 `README.md` 가 그 안의 목차 역할
 - 이미지는 `assets/`, 실습 코드는 `code/`
+- `blog/` 는 블로그 리포의 `_posts/` 를 자동으로 옮겨 오는 아카이브 — 여기서 직접 고치지 않는다
