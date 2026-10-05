@@ -67,6 +67,9 @@ team_t team = {
 #define NEXT_BLKP(bp) ((char *)(bp) + GET_SIZE(((char *)(bp) - WSIZE))) // = bp + GET_SIZE(HDRP(bp))
 #define PREV_BLKP(bp) ((char *)(bp) - GET_SIZE(((char *)(bp) - DSIZE))) // = bp - 이전 블록 크기 GET_SIZE(HDRP(bp-8))
 
+// 빈 가용 리스트
+static char *heap_listp;
+
 /* 협조 함수 */
 static void *coalesce(void *bp)
 {
@@ -125,9 +128,27 @@ static void *extend_heap(size_t words)
 
 /*
  * mm_init - initialize the malloc package.
+ * 1. mem_sbrk(4 * WSIZE) 로 4워드를 받는다
+ * 2. 첫째 워드 : 0 — 정렬 패딩
+ * 3. 둘째 워드 : PACK(DSIZE, 1) — 프롤로그 헤더
+ * 4. 셋째 워드 : PACK(DSIZE, 1) — 프롤로그 풋터
+ * 5. 넷째 워드 : PACK(0, 1) — 에필로그 헤더
+ * 6. heap_listp 를 2워드 뒤로 (프롤로그 헤더 바로 뒤)
+ * 7. extend_heap(CHUNKSIZE / WSIZE) 로 첫 가용 블록
  */
 int mm_init(void)
 {
+    if ((heap_listp = mem_sbrk(4 * WSIZE)) == (void *)-1)
+        return -1;
+    PUT(heap_listp, 0);                            /* 패딩 정렬 */
+    PUT(heap_listp + (1 * WSIZE), PACK(DSIZE, 1)); /* 프롤로그 헤더 */
+    PUT(heap_listp + (2 * WSIZE), PACK(DSIZE, 1)); /* 프롤로그 풋터 */
+    PUT(heap_listp + (3 * WSIZE), PACK(0, 1));     /* 에필로그 헤더 */
+    heap_listp += (2 * WSIZE);
+
+    // 첫 가용 블록
+    if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
+        return -1;
     return 0;
 }
 
