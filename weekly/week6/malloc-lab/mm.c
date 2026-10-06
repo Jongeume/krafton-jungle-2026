@@ -198,16 +198,42 @@ static void place(void *bp, size_t asize)
  */
 void *mm_malloc(size_t size)
 {
+    size_t asize;
+    size_t extendsize;
+    char *bp;
 
-    int newsize = ALIGN(size + SIZE_T_SIZE);
-    void *p = mem_sbrk(newsize);
-    if (p == (void *)-1)
+    // 1. size == 0
+    if (size == 0)
         return NULL;
+
+    /*
+    2.
+    size <= DSIZE, = 2 * DSIZE
+        - 최소 16바이트 크기의 블록 구성
+        - 8바이트 : 정렬 요건 만족
+        - 8바이트 : 헤더와 풋터 오버헤드
+    size > DSIZE,
+        - 오버헤드 바이트 추가
+        - 인접 8의 배수로 반올림
+    */
+    if (size < DSIZE)
+        asize = 2 * DSIZE;
     else
+        asize = DSIZE * ((size + DSIZE + DSIZE - 1) / DSIZE);
+
+    // 3. 가용리스트에서 적절한 가용블럭 검색
+    if ((bp = find_fit(asize)) != NULL)
     {
-        *(size_t *)p = size;
-        return (void *)((char *)p + SIZE_T_SIZE);
+        place(bp, asize);
+        return bp;
     }
+
+    // 4. 할당기가 맞는 블럭 못 찾았다면, 힙에 새로운 가용블록 확장
+    extendsize = MAX(asize, CHUNKSIZE);
+    if ((bp = extend_heap(extendsize / WSIZE)) == NULL)
+        return NULL;
+    place(bp, asize);
+    return bp;
 }
 
 /*
