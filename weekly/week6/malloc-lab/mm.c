@@ -48,7 +48,7 @@ team_t team = {
 
 #define SIZE_T_SIZE (ALIGN(sizeof(size_t)))
 
-/* Pack 크기와 할당 비트를 한 워드로 */
+/* Pack - 크기와 할당 비트를 한 워드로 */
 #define PACK(size, alloc) ((size) | (alloc)) // 크기와 할당 비트를 한 워드로
 
 /* 주소 p의 워드를 읽기/쓰기 */
@@ -65,7 +65,7 @@ team_t team = {
 
 /* 다음과 이전 블록의 블록 포인터를 각각 리턴 */
 #define NEXT_BLKP(bp) ((char *)(bp) + GET_SIZE(((char *)(bp) - WSIZE))) // = bp + GET_SIZE(HDRP(bp))
-#define PREV_BLKP(bp) ((char *)(bp) - GET_SIZE(((char *)(bp) - DSIZE))) // = bp - 이전 블록 크기 GET_SIZE(HDRP(bp-8))
+#define PREV_BLKP(bp) ((char *)(bp) - GET_SIZE(((char *)(bp) - DSIZE))) // = bp - 이전 블록 크기 GET_SIZE(bp-8)
 
 // 빈 가용 리스트
 static char *heap_listp;
@@ -116,7 +116,7 @@ static void *extend_heap(size_t words)
     size_t size;
 
     size = (words % 2) ? (words + 1) * WSIZE : words * WSIZE;
-    if ((long)(bp = mem_sbrk(size)) == -1)
+    if ((long)(bp = mem_sbrk(size)) == -1) // memlib.c -  mem_sbrk c:59 ~ 70
         return NULL;
 
     PUT(HDRP(bp), PACK(size, 0));
@@ -152,22 +152,88 @@ int mm_init(void)
     return 0;
 }
 
+// find_fit - first fit 방식
+static void *find_fit(size_t asize)
+{
+    void *bp;
+
+    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp))
+    {
+        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))))
+        {
+            return bp;
+        }
+    }
+
+    // No fit - malloc에서 힙에서 새로운 가용블록 확장시킴.
+    return NULL;
+}
+
+// place
+static void place(void *bp, size_t asize)
+{
+    // csize = GET_SIZE(bp-4)
+    size_t csize = GET_SIZE(HDRP(bp));
+
+    // 최소블록 = 16바이트
+    // 분할 후, 블록의 나머지가 최소 블록 크기와 같거나 크다면, 블록 분할.
+    if ((csize - asize) >= (2 * DSIZE))
+    {
+        PUT(HDRP(bp), PACK(asize, 1));
+        PUT(FTRP(bp), PACK(asize, 1));
+        bp = NEXT_BLKP(bp);
+        PUT(HDRP(bp), PACK(csize - asize, 0));
+        PUT(FTRP(bp), PACK(csize - asize, 0));
+    }
+    else
+    {
+        PUT(HDRP(bp), PACK(csize, 1));
+        PUT(FTRP(bp), PACK(csize, 1));
+    }
+}
+
 /*
  * mm_malloc - Allocate a block by incrementing the brk pointer.
  *     Always allocate a block whose size is a multiple of the alignment.
  */
 void *mm_malloc(size_t size)
 {
+    size_t asize;
+    size_t extendsize;
+    char *bp;
 
-    int newsize = ALIGN(size + SIZE_T_SIZE);
-    void *p = mem_sbrk(newsize);
-    if (p == (void *)-1)
+    // 1. size == 0
+    if (size == 0)
         return NULL;
+
+    /*
+    2.
+    size <= DSIZE, = 2 * DSIZE
+        - 최소 16바이트 크기의 블록 구성
+        - 8바이트 : 정렬 요건 만족
+        - 8바이트 : 헤더와 풋터 오버헤드
+    size > DSIZE,
+        - 오버헤드 바이트 추가
+        - 인접 8의 배수로 반올림
+    */
+    if (size < DSIZE)
+        asize = 2 * DSIZE;
     else
+        asize = DSIZE * ((size + DSIZE + DSIZE - 1) / DSIZE);
+
+    // 3. 가용리스트에서 적절한 가용블럭 검색
+    if ((bp = find_fit(asize)) != NULL)
     {
-        *(size_t *)p = size;
-        return (void *)((char *)p + SIZE_T_SIZE);
+        place(bp, asize);
+        return bp;
     }
+
+    // 4. 할당기가 맞는 블럭 못 찾았다면, 힙에 새로운 가용블록 확장
+    extendsize = MAX(asize, CHUNKSIZE);
+    if ((bp = extend_heap(extendsize / WSIZE)) == NULL)
+        return NULL;
+    place(bp, asize);
+    return bp;
 }
 
 /*
