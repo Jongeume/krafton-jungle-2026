@@ -67,8 +67,40 @@ team_t team = {
 #define NEXT_BLKP(bp) ((char *)(bp) + GET_SIZE(((char *)(bp) - WSIZE))) // = bp + GET_SIZE(HDRP(bp))
 #define PREV_BLKP(bp) ((char *)(bp) - GET_SIZE(((char *)(bp) - DSIZE))) // = bp - 이전 블록 크기 GET_SIZE(bp-8)
 
-// 빈 가용 리스트
+/* === 명시적 가용 리스트 매크로 === */
+#define PRED(bp) (*(char **)(bp))                   // 앞 빈블록
+#define SUCC(bp) (*(char **)((char *)(bp) + WSIZE)) // 뒤 빈블록
+
+// 힙의 시작점
 static char *heap_listp;
+
+// 리스트의 첫 빈블록 - 비어있으면 NULL
+static char *free_listp;
+
+static void insert_free(void *bp)
+{
+    SUCC(bp) = free_listp;
+    PRED(bp) = NULL;
+
+    if (free_listp != NULL)
+        PRED(free_listp) = bp;
+
+    free_listp = bp;
+}
+
+static void remove_free(void *bp)
+{
+    char *prev = PRED(bp);
+    char *next = SUCC(bp);
+
+    if (prev != NULL)
+        SUCC(prev) = next;
+    else
+        free_listp = next;
+
+    if (next != NULL)
+        PRED(next) = prev;
+}
 
 /* 협조 함수 */
 static void *coalesce(void *bp)
@@ -77,35 +109,39 @@ static void *coalesce(void *bp)
     size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
     size_t size = GET_SIZE(HDRP(bp));
 
+    // Case 1
     if (prev_alloc && next_alloc)
     {
-        // Case 1
-        return bp;
     }
+    // Case 2
     else if (prev_alloc && !next_alloc)
     {
-        // Case 2
+        remove_free(NEXT_BLKP(bp));
         size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
         PUT(HDRP(bp), PACK(size, 0));
         PUT(FTRP(bp), PACK(size, 0));
     }
+    // Case 3
     else if (!prev_alloc && next_alloc)
     {
-        // Case 3
+        remove_free(PREV_BLKP(bp));
         size += GET_SIZE(HDRP(PREV_BLKP(bp)));
         PUT(FTRP(bp), PACK(size, 0));
         PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
         bp = PREV_BLKP(bp);
     }
+    // Case 4
     else
     {
-        // Case 4
+        remove_free(NEXT_BLKP(bp));
+        remove_free(PREV_BLKP(bp));
         size += GET_SIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(FTRP(NEXT_BLKP(bp)));
         PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
         PUT(FTRP(NEXT_BLKP(bp)), PACK(size, 0));
         bp = PREV_BLKP(bp);
     }
 
+    insert_free(bp);
     return bp;
 }
 
@@ -146,6 +182,8 @@ int mm_init(void)
     PUT(heap_listp + (3 * WSIZE), PACK(0, 1));     /* 에필로그 헤더 */
     heap_listp += (2 * WSIZE);
 
+    free_listp = NULL;
+
     // 첫 가용 블록
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
         return -1;
@@ -157,9 +195,9 @@ static void *find_fit(size_t asize)
 {
     void *bp;
 
-    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp))
+    for (bp = free_listp; bp != NULL; bp = SUCC(bp))
     {
-        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))))
+        if ((asize <= GET_SIZE(HDRP(bp))))
         {
             return bp;
         }
@@ -172,10 +210,11 @@ static void *find_fit(size_t asize)
 // place
 static void place(void *bp, size_t asize)
 {
+    remove_free(bp);
     // csize = GET_SIZE(bp-4)
     size_t csize = GET_SIZE(HDRP(bp));
 
-    // 최소블록 = 16바이트
+    // 최소블록 = 16바이트 (헤더 4 + PRED 4 + SUCC 4 + 풋터 4, -m32)
     // 분할 후, 블록의 나머지가 최소 블록 크기와 같거나 크다면, 블록 분할.
     if ((csize - asize) >= (2 * DSIZE))
     {
@@ -184,6 +223,7 @@ static void place(void *bp, size_t asize)
         bp = NEXT_BLKP(bp);
         PUT(HDRP(bp), PACK(csize - asize, 0));
         PUT(FTRP(bp), PACK(csize - asize, 0));
+        insert_free(bp);
     }
     else
     {
@@ -263,11 +303,12 @@ void *mm_realloc(void *ptr, size_t size)
         return NULL;
     }
 
-    void *oldptr = ptr;
-    void *newptr;
-    size_t oldsize = GET_SIZE(HDRP(oldptr));             // 지금 블록 크기
-    size_t nextsize = GET_SIZE(HDRP(NEXT_BLKP(oldptr))); // 다음 블록 크기
-    size_t asize;                                        // 원하는 블록 크기
+    void *curPtr = ptr;
+    void *newPtr;
+    size_t curSize = GET_SIZE(HDRP(curPtr));             // 지금 블록 크기
+    size_t nextSize = GET_SIZE(HDRP(NEXT_BLKP(curPtr))); // 다음 블록 크기
+    size_t combinedSize = curSize + nextSize;
+    size_t asize; // 원하는 블록 크기
 
     // 원하는 블록 크기
     if (size < DSIZE)
@@ -276,43 +317,60 @@ void *mm_realloc(void *ptr, size_t size)
         asize = DSIZE * ((size + DSIZE + DSIZE - 1) / DSIZE);
 
     // 1. asize가 현재블록 보다 클 때
-    if (asize > oldsize)
+    if (asize > curSize)
     {
         // 다음 블록이 가용상태 and 병합블록크기(old + next)가 asize보다 크거나 같을때
-        if (!GET_ALLOC(HDRP(NEXT_BLKP(oldptr))) && oldsize + nextsize >= asize)
+        if (!GET_ALLOC(HDRP(NEXT_BLKP(curPtr))) && (combinedSize) >= asize)
         {
-            newptr = oldptr;
-            PUT(HDRP(newptr), PACK(oldsize + nextsize, 1));
-            PUT(FTRP(newptr), PACK(oldsize + nextsize, 1));
-            place(newptr, asize);
+            newPtr = curPtr;
+            remove_free(NEXT_BLKP(curPtr));
+            if ((combinedSize)-asize >= 2 * DSIZE)
+            {
+                PUT(HDRP(newPtr), PACK(asize, 1));
+                PUT(FTRP(newPtr), PACK(asize, 1));
+                PUT(HDRP(NEXT_BLKP(newPtr)), PACK(combinedSize - asize, 0));
+                PUT(FTRP(NEXT_BLKP(newPtr)), PACK(combinedSize - asize, 0));
+                insert_free(NEXT_BLKP(newPtr));
+            }
+            else
+            {
+                PUT(HDRP(newPtr), PACK(combinedSize, 1));
+                PUT(FTRP(newPtr), PACK(combinedSize, 1));
+            }
         }
         // 다음 블록 할당상태
         else
         {
-            newptr = mm_malloc(size);
-            if (newptr == NULL)
+            newPtr = mm_malloc(size);
+            if (newPtr == NULL)
                 return NULL;
 
-            memcpy(newptr, oldptr, oldsize - DSIZE);
-            mm_free(oldptr);
+            memcpy(newPtr, curPtr, curSize - DSIZE);
+            mm_free(curPtr);
         }
     }
     // 2. asize가 현재블록크기 보다 작을 때
-    else if (asize < oldsize)
+    else if (asize < curSize)
     {
-        // oldsize − asize >= 16(최소크기) 일 때만 coalesce를 부른다
-        size_t remain = oldsize - asize;
-        oldsize = asize;
-        newptr = oldptr;
-        place(newptr, oldsize);
+        // curSize − asize >= 16(최소크기) 일 때만 coalesce를 부른다
+        size_t remain = curSize - asize;
+        curSize = asize;
+        newPtr = curPtr;
+
         if (remain >= 2 * DSIZE)
-            coalesce(NEXT_BLKP(newptr));
+        {
+            PUT(HDRP(newPtr), PACK(asize, 1));
+            PUT(FTRP(newPtr), PACK(asize, 1));
+            PUT(HDRP(NEXT_BLKP(newPtr)), PACK(remain, 0));
+            PUT(FTRP(NEXT_BLKP(newPtr)), PACK(remain, 0));
+            coalesce(NEXT_BLKP(newPtr));
+        }
     }
     // 3. asize가 현재블록크기 와 같을 때
     else
     {
-        newptr = oldptr;
+        newPtr = curPtr;
     }
 
-    return newptr;
+    return newPtr;
 }
