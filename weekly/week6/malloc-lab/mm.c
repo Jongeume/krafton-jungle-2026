@@ -48,7 +48,7 @@ team_t team = {
 
 #define SIZE_T_SIZE (ALIGN(sizeof(size_t)))
 
-/* Pack 크기와 할당 비트를 한 워드로 */
+/* Pack - 크기와 할당 비트를 한 워드로 */
 #define PACK(size, alloc) ((size) | (alloc)) // 크기와 할당 비트를 한 워드로
 
 /* 주소 p의 워드를 읽기/쓰기 */
@@ -65,7 +65,7 @@ team_t team = {
 
 /* 다음과 이전 블록의 블록 포인터를 각각 리턴 */
 #define NEXT_BLKP(bp) ((char *)(bp) + GET_SIZE(((char *)(bp) - WSIZE))) // = bp + GET_SIZE(HDRP(bp))
-#define PREV_BLKP(bp) ((char *)(bp) - GET_SIZE(((char *)(bp) - DSIZE))) // = bp - 이전 블록 크기 GET_SIZE(HDRP(bp-8))
+#define PREV_BLKP(bp) ((char *)(bp) - GET_SIZE(((char *)(bp) - DSIZE))) // = bp - 이전 블록 크기 GET_SIZE(bp-8)
 
 // 빈 가용 리스트
 static char *heap_listp;
@@ -116,7 +116,7 @@ static void *extend_heap(size_t words)
     size_t size;
 
     size = (words % 2) ? (words + 1) * WSIZE : words * WSIZE;
-    if ((long)(bp = mem_sbrk(size)) == -1)
+    if ((long)(bp = mem_sbrk(size)) == -1) // memlib.c -  mem_sbrk c:59 ~ 70
         return NULL;
 
     PUT(HDRP(bp), PACK(size, 0));
@@ -150,6 +150,29 @@ int mm_init(void)
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
         return -1;
     return 0;
+}
+
+// place
+static void place(void *bp, size_t asize)
+{
+    // csize = GET_SIZE(bp-4)
+    size_t csize = GET_SIZE(HDRP(bp));
+
+    // 최소블록 = 16바이트
+    // 분할 후, 블록의 나머지가 최소 블록 크기와 같거나 크다면, 블록 분할.
+    if ((csize - asize) >= (2 * DSIZE))
+    {
+        PUT(HDRP(bp), PACK(asize, 1));
+        PUT(FTRP(bp), PACK(asize, 1));
+        bp = NEXT_BLKP(bp);
+        PUT(HDRP(bp), PACK(csize - asize, 0));
+        PUT(FTRP(bp), PACK(csize - asize, 0));
+    }
+    else
+    {
+        PUT(HDRP(bp), PACK(csize, 1));
+        PUT(FTRP(bp), PACK(csize, 1));
+    }
 }
 
 /*
