@@ -253,22 +253,66 @@ void mm_free(void *ptr)
  */
 void *mm_realloc(void *ptr, size_t size)
 {
-    /*
-    [제자리 할당 최적화]
-    1. 기존의 영역이랑 크기가 같을 때. -> 값복사 X, 포인터 그대로
-    2. 기존의 영역보다 크기가 작을 때. -> 값복사 X, 포인터 그대로, 블록크기 줄이기.
-    */
+
+    if (ptr == NULL)
+        return mm_malloc(size);
+
+    if (size == 0)
+    {
+        mm_free(ptr);
+        return NULL;
+    }
+
     void *oldptr = ptr;
     void *newptr;
-    size_t copySize;
+    size_t oldsize = GET_SIZE(HDRP(oldptr));             // 지금 블록 크기
+    size_t nextsize = GET_SIZE(HDRP(NEXT_BLKP(oldptr))); // 다음 블록 크기
+    size_t asize;                                        // 원하는 블록 크기
 
-    newptr = mm_malloc(size);
-    if (newptr == NULL)
-        return NULL;
-    copySize = *(size_t *)((char *)oldptr - SIZE_T_SIZE);
-    if (size < copySize)
-        copySize = size;
-    memcpy(newptr, oldptr, copySize);
-    mm_free(oldptr);
+    // 원하는 블록 크기
+    if (size < DSIZE)
+        asize = 2 * DSIZE;
+    else
+        asize = DSIZE * ((size + DSIZE + DSIZE - 1) / DSIZE);
+
+    // 1. asize가 현재블록 보다 클 때
+    if (asize > oldsize)
+    {
+        // 다음 블록이 가용상태 and 병합블록크기(old + next)가 asize보다 크거나 같을때
+        if (!GET_ALLOC(HDRP(NEXT_BLKP(oldptr))) && oldsize + nextsize >= asize)
+        {
+            newptr = oldptr;
+            PUT(HDRP(newptr), PACK(oldsize + nextsize, 1));
+            PUT(FTRP(newptr), PACK(oldsize + nextsize, 1));
+            place(newptr, asize);
+        }
+        // 다음 블록 할당상태
+        else
+        {
+            newptr = mm_malloc(size);
+            if (newptr == NULL)
+                return NULL;
+
+            memcpy(newptr, oldptr, oldsize - DSIZE);
+            mm_free(oldptr);
+        }
+    }
+    // 2. asize가 현재블록크기 보다 작을 때
+    else if (asize < oldsize)
+    {
+        // oldsize − asize >= 16(최소크기) 일 때만 coalesce를 부른다
+        size_t remain = oldsize - asize;
+        oldsize = asize;
+        newptr = oldptr;
+        place(newptr, oldsize);
+        if (remain >= 2 * DSIZE)
+            coalesce(NEXT_BLKP(newptr));
+    }
+    // 3. asize가 현재블록크기 와 같을 때
+    else
+    {
+        newptr = oldptr;
+    }
+
     return newptr;
 }
