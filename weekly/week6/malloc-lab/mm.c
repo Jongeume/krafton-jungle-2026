@@ -152,6 +152,23 @@ int mm_init(void)
     return 0;
 }
 
+// find_fit - first fit 방식
+static void *find_fit(size_t asize)
+{
+    void *bp;
+
+    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp))
+    {
+        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))))
+        {
+            return bp;
+        }
+    }
+
+    // No fit - malloc에서 힙에서 새로운 가용블록 확장시킴.
+    return NULL;
+}
+
 // place
 static void place(void *bp, size_t asize)
 {
