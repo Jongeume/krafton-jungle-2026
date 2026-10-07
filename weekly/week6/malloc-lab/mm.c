@@ -79,13 +79,47 @@ static char *free_listp;
 
 static void insert_free(void *bp)
 {
-    SUCC(bp) = free_listp;
-    PRED(bp) = NULL;
+    void *stopBp = free_listp;
+    void *preBp = NULL;
 
-    if (free_listp != NULL)
-        PRED(free_listp) = bp;
+    // 밑으로 큰 주소가 쌓여야함.
+    while (stopBp != NULL && stopBp < bp)
+    {
+        preBp = stopBp;
+        stopBp = SUCC(stopBp);
+    }
 
-    free_listp = bp;
+    if (preBp == NULL && stopBp == NULL)
+    {
+        // 1. 리스트 빔
+        PRED(bp) = NULL;
+        SUCC(bp) = NULL;
+        free_listp = bp;
+    }
+    else if (preBp == NULL)
+    {
+        // 2. 맨 위에 들어감
+        PRED(bp) = NULL;
+        SUCC(bp) = free_listp;
+        if (free_listp != NULL)
+            PRED(free_listp) = bp;
+        free_listp = bp;
+    }
+    else if (stopBp == NULL)
+    {
+        // 4. 맨 아래 들어감
+        PRED(bp) = preBp;
+        SUCC(bp) = NULL;
+        SUCC(preBp) = bp;
+    }
+    else
+    {
+        // 3. 중간에 들어감
+        PRED(bp) = preBp;
+        SUCC(preBp) = bp;
+        SUCC(bp) = stopBp;
+        PRED(stopBp) = bp;
+    }
 }
 
 static void remove_free(void *bp)
