@@ -71,11 +71,25 @@ team_t team = {
 #define PRED(bp) (*(char **)(bp))                   // 앞 빈블록
 #define SUCC(bp) (*(char **)((char *)(bp) + WSIZE)) // 뒤 빈블록
 
+/* === tcache 플래그 매크로 === */
+#define TC_MIN 16                                // 최소 블록
+#define TC_MAX 128                               // 최대 블록
+#define TC_NBINS ((TC_MAX - TC_MIN) / DSIZE + 1) // bin 개수
+#define TC_FILL 7                                // bin에 담을 최대 개수
+#define TC_FLAG 0x2                              // tcache flag (헤더공간에 1비트)
+#define TC_AREA (TC_NBINS * DSIZE)               // bin 영역 크기
+
+/* === 주소 계산 매크로 === */
+#define TC_IDX(size) (((size) - TC_MIN) / DSIZE)
+#define TC_HEAD(i) (*(char **)(tc_base + ((i) * WSIZE)))
+#define TC_NEXT(bp) (PRED(bp))
+#define TC_CNT(i) (*(unsigned int *)(tc_base + (TC_NBINS + (i)) * WSIZE)) // i번 bin에 들어있는 블록 수를 세는 칸의 값
+
 // 힙의 시작점
 static char *heap_listp;
 
 // 리스트의 첫 빈블록 - 비어있으면 NULL
-static char *free_listp;
+static char *free_listp, *tc_base;
 
 static void insert_free(void *bp)
 {
@@ -174,8 +188,21 @@ static void *extend_heap(size_t words)
  */
 int mm_init(void)
 {
+    // bin 영역 받기
+    if ((tc_base = mem_sbrk(TC_AREA)) == (void *)-1)
+        return -1;
+
+    // bin 비우기
+    for (int i = 0; i < TC_NBINS; i++)
+    {
+        TC_HEAD(i) = NULL;
+        // 블록개수 세는 칸
+        TC_CNT(i) = 0;
+    }
+
     if ((heap_listp = mem_sbrk(4 * WSIZE)) == (void *)-1)
         return -1;
+
     PUT(heap_listp, 0);                            /* 패딩 정렬 */
     PUT(heap_listp + (1 * WSIZE), PACK(DSIZE, 1)); /* 프롤로그 헤더 */
     PUT(heap_listp + (2 * WSIZE), PACK(DSIZE, 1)); /* 프롤로그 풋터 */
@@ -261,6 +288,19 @@ void *mm_malloc(size_t size)
     else
         asize = DSIZE * ((size + DSIZE + DSIZE - 1) / DSIZE);
 
+    /* == tcache == */
+    int tc_idx = TC_IDX(asize);
+    char *tc_bp;
+    if (asize <= TC_MAX && TC_CNT(tc_idx) > 0)
+    {
+        tc_bp = TC_HEAD(tc_idx);
+        TC_HEAD(tc_idx) = TC_NEXT(tc_bp);
+        TC_CNT(tc_idx)
+        --;
+        PUT(HDRP(tc_bp), GET(HDRP(tc_bp)) & ~TC_FLAG);
+        return tc_bp;
+    }
+
     // 3. 가용리스트에서 적절한 가용블럭 검색
     if ((bp = find_fit(asize)) != NULL)
     {
@@ -282,6 +322,23 @@ void *mm_malloc(size_t size)
 void mm_free(void *ptr)
 {
     size_t size = GET_SIZE(HDRP(ptr));
+
+    // flag 확인
+    if (GET(HDRP(ptr)) & TC_FLAG)
+        return;
+
+    int tc_idx = TC_IDX(size);
+    // 범위안 and 블록수 7 미만
+    if (size <= TC_MAX && TC_CNT(tc_idx) < TC_FILL)
+    {
+        TC_NEXT(ptr) = TC_HEAD(tc_idx);
+        TC_HEAD(tc_idx) = ptr;
+        TC_CNT(tc_idx)
+        ++;
+
+        PUT(HDRP(ptr), GET(HDRP(ptr)) | TC_FLAG);
+        return;
+    }
 
     PUT(HDRP(ptr), PACK(size, 0));
     PUT(FTRP(ptr), PACK(size, 0));
