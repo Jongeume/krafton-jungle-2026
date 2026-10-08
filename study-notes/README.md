@@ -4,6 +4,7 @@
 
 ## 목차
 - [CS:APP](csapp/README.md) — [9장 가상메모리](csapp/09-virtual-memory/README.md)
+- [6주차 학습 과제](week6-learning/README.md) — 가상메모리 · 동적 메모리 할당 (#95 ~ #99)
 
 ---
 
